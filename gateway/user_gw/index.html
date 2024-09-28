@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+  </head>
+  <body>
+    <h3>Local Video</h3>
+    <video id="localVideo" width="160" height="120" autoplay muted></video> <br />
+
+    <h3>Remote Video</h3>
+    <div id="remoteVideos"></div> <br />
+
+    <h3>Logs</h3>
+    <div id="logs"></div>
+    <br>
+    <input type="text" id="textInput">
+    <br>
+    
+    <button onclick="closeFunction()">Close</button>
+    <button onclick="publicChatFunction()">Chat</button>
+    <button onclick="startRecordingFunction()">Start Recording</button>
+    <button onclick="stopRecordingFunction()">Stop Recording</button>
+    <button onclick="GetUsers()">Get Users</button>
+    <button onclick="ConfirmFile()">Confirm File</button>
+    <button onclick="SelfMute()">Self Mute</button>
+    <button onclick="SelfUnMute()">Self UnMute</button>
+    <button onclick="ApproveMeeting()">Approve Meeting</button>
+
+    <script>
+      let publicWs;
+      navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(stream => {
+        let peerConnection = new RTCPeerConnection()
+        peerConnection.ontrack = function (event) {
+          if (event.track.kind === 'audio') {
+            return;
+          }
+          let element = document.createElement(event.track.kind);
+          element.srcObject = event.streams[0];
+          element.autoplay = true;
+          element.controls = true;
+          document.getElementById('remoteVideos').appendChild(element);
+
+          event.track.onmute = function(event) {
+            element.play();
+          }
+
+          event.streams[0].onremovetrack = ({track}) => {
+            if (element.parentNode) {
+              element.parentNode.removeChild(element);
+            }
+          }
+        }
+
+        document.getElementById('localVideo').srcObject = stream;
+        stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
+
+        // publicWs = new WebSocket("ws://185.36.231.135:8000/room/ws");
+        publicWs = new WebSocket("ws://127.0.0.1:8080/room/ws");
+        peerConnection.onicecandidate = e => {
+          if (!e.candidate) {
+            return;
+          }
+          
+          publicWs.send(JSON.stringify({event: 'candidate', data: JSON.stringify(e.candidate)}));
+        }
+        publicWs.onopen = function(evt){
+          const randomInt = Math.floor(Math.random() * (100 - 10 + 1)) + 10;
+          publicWs.send(JSON.stringify({data:'iaPofvGVVeYbFhgUcjxjPJdRrFjmBb', name: randomInt.toString()}));
+        }
+        publicWs.onclose = function(evt) {
+          console.log(evt);
+          window.alert("Websocket has closed ");
+        }
+
+        publicWs.onmessage = function(evt) {
+          console.log(evt.data);
+          let msg = JSON.parse(evt.data);
+          if (!msg) {
+            return console.log('failed to parse msg');
+          }
+
+          switch (msg.event) {
+            case 'offer':
+              let offer = JSON.parse(msg.data);
+              if (!offer) {
+                return console.log('failed to parse answer');
+              }
+              peerConnection.setRemoteDescription(offer);
+              peerConnection.createAnswer().then(answer => {
+                peerConnection.setLocalDescription(answer);
+                publicWs.send(JSON.stringify({event: 'answer', data: JSON.stringify(answer)}));
+              });
+              return;
+
+            case 'candidate':
+              let candidate = JSON.parse(msg.data);
+              if (!candidate) {
+                return console.log('failed to parse candidate');
+              }
+
+              peerConnection.addIceCandidate(candidate);
+          }
+        }
+        
+        publicWs.onerror = function(evt) {
+          console.log("ERROR: " + evt.data);
+        }
+      }).catch(window.alert);
+      
+      function closeFunction() {
+        console.log("clicked");
+        publicWs.send(JSON.stringify({event:'close'}));
+      }
+
+      function publicChatFunction() {
+        var inputElement = document.getElementById("textInput");
+
+        // Get the value of the input field
+        var inputValue = inputElement.value;
+        publicWs.send(JSON.stringify({event:'public_chat', data: inputValue}));
+      }
+
+      function startRecordingFunction() {
+        publicWs.send(JSON.stringify({event:'start_record',data: "5"}));
+      }
+      
+      function stopRecordingFunction() {
+        publicWs.send(JSON.stringify({event:'stop_record',data: "5"}));
+      }
+      function GetUsers(){
+        publicWs.send(JSON.stringify({event:'get_users'}));
+      }
+      function ConfirmFile(){
+        publicWs.send(JSON.stringify({event:'confirm_file'}));
+      }
+      function SelfMute(){
+        publicWs.send(JSON.stringify({event:'self_mute'}));
+      }
+      function SelfUnMute(){
+        publicWs.send(JSON.stringify({event:'self_unmute'}));
+      }
+      function ApproveMeeting(){
+        publicWs.send(JSON.stringify({event:'approve_meeting'}));
+      }
+    </script>
+  </body>
+</html>

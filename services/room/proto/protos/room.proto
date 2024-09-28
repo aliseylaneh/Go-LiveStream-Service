@@ -1,0 +1,144 @@
+syntax = "proto3";
+
+package room;
+
+option go_package = "./";
+
+service RoomService{
+    rpc register_room(RegisterRoomRequest) returns (RegisterRoomResponse);
+    rpc close_room(CloseRoomByRoomIdRequest) returns (Empty);
+    rpc get_rooms_by_userid(GetRoomByUserId) returns (Rooms);
+    rpc get_room_by_roomid(GetRoomByRoomId) returns (Room);
+    rpc get_open_room_by_userid(GetRoomByUserId) returns (Room);
+    rpc get_room_creator_by_roomid(GetRoomByRoomId) returns (GetRoomByUserId);
+    rpc check_room_joinable(IsRoomJoinableRequest) returns (IsRoomJoinableResponse);
+    rpc get_rooms(Pagination) returns (Rooms);
+    rpc get_open_rooms(Pagination) returns (Rooms);
+    rpc add_room_log(AddRoomLog) returns (Empty);
+    rpc get_room_logs_by_roomid(GetRoomByRoomId) returns (RoomLogs);
+    rpc add_room_result(AddRoomResult) returns (Empty);
+    rpc get_room_results(Pagination) returns (RoomResults);
+    rpc get_room_result_by_roomid(GetRoomByRoomId) returns (RoomResult);
+    rpc get_room_results_count(Empty) returns (RoomResultsCount);
+    rpc get_all_users(Pagination) returns (RoomUsers);
+    rpc add_ban_user(GetRoomByUserId) returns (Empty);
+    rpc remove_ban_user(GetRoomByUserId) returns (Empty);
+    // rpc get_archived_room_by_room_id(GetRoomByRoomId) returns (Room);
+    // rpc get_archived_rooms(Pagination) returns (Rooms);
+    // rpc get_rooms(Pagination) returns (Rooms);
+}
+
+message Empty{
+
+}
+message Room{
+    string room_id = 1;
+    string user_id = 2;
+    int32 users_length = 3;
+    bool closed = 4;
+    int64 created_at = 5;
+    optional int64 schaduled = 6;
+    optional int64 room_expiry = 7;
+    optional int64 archived_at = 8;
+    optional int64 closed_at = 9;
+}
+
+message Rooms{
+    repeated Room rooms = 1;
+    optional int32 total = 2;
+}
+
+message RegisterRoomRequest{
+    string creator = 1;
+    int32 users_length = 2;
+    optional int64 scheduled = 3;
+    optional int64 room_expiry = 4;
+}
+
+message RegisterRoomResponse{
+    string link = 2;
+}
+
+message CloseRoomByRoomIdRequest{
+    string room_id = 1;
+}
+
+message GetRoomByUserId{
+    string user_id = 1;
+}
+
+message GetRoomByRoomId{
+    string room_id = 1;
+}
+
+message IsRoomJoinableRequest{
+    string room_id = 1;
+    string user_id = 2;
+}
+
+message IsRoomJoinableResponse{
+    string status = 1;
+} 
+
+message Users {
+    repeated Room rooms = 1;
+    optional int64 total_count = 2;
+}
+
+message Pagination{
+    int32 offset = 1;
+    int32 limit = 2;
+    bool get_total = 3;
+}
+
+message RoomLog{
+    string room_id = 1;
+    string user_id = 2;
+    string user_event = 3;
+    int64 created_at = 4;
+}
+
+message AddRoomLog{
+    string room_id = 1;
+    string user_id = 2;
+    string user_event = 3;
+}
+
+message RoomLogs{
+    repeated RoomLog room_logs = 1;
+    optional int32 total = 2;
+}
+
+message AddRoomResult{
+    string room_id = 1;
+    repeated string approvers = 2;
+    repeated string Deniers = 3;
+}
+
+message RoomResult{
+    string room_id = 1;
+    repeated string approvers = 2;
+    repeated string Deniers = 3;
+    int64 created_at = 4;
+}
+
+message RoomResults{
+    repeated RoomResult room_results = 1;
+    optional int32 total = 2;
+}
+
+message RoomResultsCount{
+    int32 success = 1;
+    int32 failed = 2;
+}
+
+message RoomUser{
+    string user_id = 1;
+    string status = 2;
+    int64 first_occurrence = 3;
+}
+
+message RoomUsers{
+    repeated RoomUser room_users = 1;
+    optional int32 total = 2;
+}

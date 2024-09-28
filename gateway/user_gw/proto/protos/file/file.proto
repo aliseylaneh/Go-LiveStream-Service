@@ -1,0 +1,82 @@
+// Specifies the version of the protocol buffer syntax used
+syntax = "proto3";
+
+// Specifies the package name for the generated code
+package file;
+
+// Specifies the Go package for the generated code
+option go_package = "./";
+
+// Defines the service methods provided by FileService
+service FileService {
+    // Method to add a file
+    rpc add_file(AddFileRequest) returns (AddFileResponse);
+    // Method to remove a file
+    rpc remove_file(RemoveFileRequest) returns (Empty);
+    // Method to get files by file ID
+    rpc get_file_by_fileid(GetFileByFileIdRequest) returns (Files);
+    // Method to get files by user ID
+    rpc get_file_by_userid(GetFileByUserIdRequest) returns (Files);
+    // Method to get files by room ID
+    rpc get_file_by_roomid(GetFileByRoomIdRequest) returns (Files);
+
+    rpc get_files(Pagination) returns (Files);
+}
+
+
+message Pagination{
+    int32 offset = 1;
+    int32 limit = 2;
+    bool get_total = 3;
+}
+
+// Empty message used for methods that do not return any data
+message Empty {}
+
+// Defines the structure of a file
+message File {
+    string file_id = 1;       // Unique identifier for the file
+    string file_type = 2;     // Type of the file
+    string room_id = 3;       // Identifier for the room associated with the file
+    optional string user_id = 4;  // Optional user ID, assuming it's present for some files
+    int64 created_at = 5;     // Timestamp indicating when the file was created
+}
+
+// Defines a list of files
+message Files {
+    repeated File files = 1;  // A list of File messages
+    optional int32 total = 2;
+}
+
+// Request message to add a file
+message AddFileRequest {
+    string file_id = 1;       // ID of the file to add
+    string file_type = 2;     // Type of the file
+    string room_id = 3;       // Room ID associated with the file
+    optional string user_id = 4;  // Optional user ID
+}
+
+// Response message after adding a file
+message AddFileResponse {
+    string file_id = 1;       // ID of the added file
+}
+
+// Request message to remove a file
+message RemoveFileRequest {
+    string file_id = 1;       // ID of the file to remove
+}
+
+// Request message to get a file by its ID
+message GetFileByFileIdRequest {
+    string file_id = 1;       // ID of the file to retrieve
+}
+
+// Request message to get files by user ID
+message GetFileByUserIdRequest {
+    string user_id = 1;        // ID of the user whose files to retrieve
+}
+
+// Request message to get files by room ID
+message GetFileByRoomIdRequest {
+    string room_id = 1;       // ID of the room whose files to retrieve
+}
